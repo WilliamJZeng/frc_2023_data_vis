@@ -14,4 +14,7 @@ p_load(tidyverse, magrittr, fredr, usethis)
 ```{r}
 # set fred api key
 edit_r_environ()
+
+# test
+
 ```
