@@ -1,0 +1,17 @@
+---
+title: "Housing Presentation Visualizations"
+format: html
+---
+
+# Imports
+```{r}
+library(pacman)
+
+p_load(tidyverse, magrittr, fredr, usethis)
+```
+
+# FRED Data Request
+```{r}
+# set fred api key
+fredr_set_key("")
+```
