@@ -13,5 +13,5 @@ p_load(tidyverse, magrittr, fredr, usethis)
 # FRED Data Request
 ```{r}
 # set fred api key
-fredr_set_key("")
+edit_r_environ()
 ```
