@@ -5,10 +5,13 @@ format: html
 code-fold: true
 code-tools: true
 ---
-# [Optional] Set up radian terminal
+
+# \[Optional\] Set up radian terminal
+
 Run `radian` in `pwsh` termminal (after `conda` has been activated).
 
 # Imports
+
 ```{r Imports}
 #| code-fold: show
 #| code-summary: "Show the code"
@@ -20,7 +23,9 @@ p_load(httpgd, tidyverse, magrittr, fredr, usethis, tidylog)
 ```
 
 # FRED Data Request
+
 ## FRED API Key
+
 ```{r FRED_API_Key}
 #| code-fold: show
 #| code-summary: "Show the code"
@@ -31,115 +36,225 @@ fredr_set_key("b52b96206028819f9004032ce5afe5a7")
 
 ```
 
+```{r FRED_Request_Function}
+
+
+```
+
 ## Construction Statistics
+
 ```{r Construction_Stats}
 #| code-fold: show
 #| code-summary: "Show the code"
 #| 
 # construction stats
 
-#
-houseStarts <- fredr(
-    series_id = "HOUST",
-    observation_start = as.Date("2022-08-01"),
-    frequency = "m",
-    aggregation_method = "avg"
-)
-
-houseCompletes <- fredr(
-    series_id = "COMPUTSA",
-    observation_start = as.Date("2022-08-01"),
-    frequency = "m",
-    aggregation_method = "avg"
-)
-
-housePermits <- fredr(
-    series_id = "HOUST",
-    observation_start = as.Date("2022-08-01"),
-    frequency = "m",
-    aggregation_method = "avg"
-)
+construction_stats <- pmap_dfr(
+  .l = list(
+    series_id = c("HOUST", "COMPUTSA", "PERMIT"),
+    frequency = rep("m", 3), 
+    observation_start = rep(as.Date("2022-01-01"), 3),
+    units = rep("pc1", 3)
+    ),
+  .f = ~ fredr(series_id = ..1, frequency = ..2, observation_start = ..3, units = ..4)
+) %>%
+mutate(series_id = 
+    case_when(
+        series_id == "HOUST" ~ "Housing starts", 
+        series_id == "COMPUTSA" ~ "Housing completions",
+        series_id == "PERMIT" ~ "Building permits issued"
+ ))
 ```
 
 ## Input Prices
+
 ```{r Input_Prices}
 #| code-fold: show
 #| code-summary: "Show the code"
 
 # input prices
 # to-do: seasonally adjust all?
-
-ppi_residentialConstructionGoods <- fredr(
-    series_id = "WPUIP2311001",
-    observation_start = as.Date("2022-08-01"),
-    frequency = "m",
-    aggregation_method = "avg"
-)
-
-ppi_residentialConstructionServices <- fredr(
-    series_id = "WPUIP2311102",
-    observation_start = as.Date("2022-08-01"),
-    frequency = "m",
-    aggregation_method = "avg"
-)
-
-ppi_constructionMaterials <- fredr(
-    series_id = "WPUSI012011",
-    observation_start = as.Date("2022-08-01"),
-    frequency = "m",
-    aggregation_method = "avg"
-)
-
-ppi_lumber_woodProducts <- fredr(
-    series_id = "WPU08",
-    observation_start = as.Date("2022-08-01"),
-    frequency = "m",
-    aggregation_method = "avg"
-)
-
-ppi_glass <- fredr(
-    series_id = "WPU131",
-    observation_start = as.Date("2022-08-01"),
-    frequency = "m",
-    aggregation_method = "avg"
-)
-
-ppi_iron_steel <- fredr(
-    series_id = "WPU131",
-    observation_start = as.Date("2022-08-01"),
-    frequency = "m",
-    aggregation_method = "avg"
-)
-
-ppi_readyMixConcrete <- fredr(
-    series_id = "WPS133301",
-    observation_start = as.Date("2022-08-01"),
-    frequency = "m",
-    aggregation_method = "avg"
+# to-do: variable fo number of variables
+housing_input_prices <- pmap_dfr(
+  .l = list(
+    series_id = c("WPUIP2311001", "WPUIP2311102", "WPUSI012011", "WPU01", "WPU131", "WPS101", "WPS133301"),
+    frequency = rep("m", 7), 
+    observation_start = rep(as.Date("2022-01-01"), 7),
+    units = rep("pc1", 7)
+    ),
+  .f = ~ fredr(series_id = ..1, frequency = ..2, observation_start = ..3, units = ..4)
+) %>%
+mutate(series_id = 
+    case_when(
+        series_id == "WPUIP2311001" ~ "Residential construction goods PPI", 
+        series_id == "WPUIP2311102" ~ "Residential construction services PPI",
+        series_id == "WPUSI012011" ~ "Construction materials PPI",
+        series_id == "WPU01" ~ "Lumber and wood products PPI",
+        series_id == "WPU131" ~ "Glass PPI",
+        series_id == "WPS101" ~ "Iron and steel PPI",
+        series_id == "WPS133301" ~ "Ready-mix concrete PPI"
+    )
 )
 ```
 
 ## Home Finances
+
 ```{r Home_Prices}
 #| code-fold: show
 #| code-summary: "Show the code"
 
-# home prices
-
-# 
-avg30YrFixedMortgage <- fredr(
-    series_id = "MORTGAGE30US",
-    observation_start = as.Date("2022-08-01"),
-    frequency = "m",
-    aggregation_method = "avg"
+home_prices <- pmap_dfr(
+  .l = list(
+    series_id = c("CSUSHPISA", "MSPUS"),
+    frequency = c("m", "q"), 
+    observation_start = rep(as.Date("2022-01-01"), 2),
+    units = rep("pc1", 2)
+    ),
+  .f = ~ fredr(series_id = ..1, frequency = ..2, observation_start = ..3, units = ..4)
+) %>%
+mutate(series_id = 
+    case_when(
+        series_id == "CSUSHPISA" ~ "S&P/Case-Shiller U.S. National Home Price Index",
+        series_id == "MSPUS" ~ "Median sales price of houses sold"
+    )
 )
 
-# seasonally-adjusted
-spcs_homePriceIndex <- fredr(
-    series_id = "CSUSHPISA",
-    observation_start = as.Date("2022-08-01"),
+avg30YrFixedMortgage <- fredr(
+    series_id = "MORTGAGE30US",
+    observation_start = as.Date("2022-01-01"),
     frequency = "m",
-    aggregation_method = "avg"
+    aggregation_method = "avg",
+    units = "lin"
+) %>%
+mutate(series_id = 
+    case_when(
+        series_id == "MORTGAGE30US" ~ "Average 30-year fixed-rate mortgage"
+    )
+)
+```
+
+## Graphics
+
+```{r Graphics}
+# houseStarts %>%
+#     ggplot(
+#         mapping = aes(x = date, y = value, color = series_id)) +
+#     geom_line() +
+#     labs(x = "Observation Date", y = "% Change from 1 Year Ago", color = "Series")
+
+graph_formatting <- list(
+    scale_color_brewer(palette = "Paired"),
+    scale_y_continuous(labels = scales::percent_format(scale = 1)),
+
+    # specify custom font
+    theme_minimal(base_family = "Roboto Condensed", base_size = 12),
+
+    # make modifications to the theme, adjusting fonts and formatting
+    theme(
+        panel.grid.minor = element_blank(),
+        plot.title = element_text(face = "bold", size = rel(1.7)),
+        plot.subtitle = element_text(
+            face = "plain", 
+            size = rel(1.3), color = "grey70"
+        ),
+        plot.caption = element_text(
+            face = "italic", size = rel(0.7),
+            color = "grey70", hjust = 0
+        ),
+        strip.text = element_text(face = "bold", size = rel(1.1), hjust = 0),
+        axis.title = element_text(face = "bold"),
+        axis.title.x = element_text(margin = margin(t = 10), hjust = 0),
+        axis.title.y = element_text(margin = margin(r = 10), hjust = 1),
+        # strip.background = element_rect(fill = "grey90", color = NA),
+        # panel.border = element_rect(color = "grey90", fill = NA),
+        panel.background = element_rect(fill="white"),
+        plot.background = element_rect(fill="white", color = NA),
+        legend.position = "bottom"
+    )
+)
+
+construction_stats_graph <- construction_stats %>%
+    ggplot(
+        data = ., mapping = aes(x = date, 
+                                y = value, 
+                                color = series_id)) +
+    geom_line(size = 1) +
+    labs(
+        title = "Construction Stats",
+        subtitle = "Housing starts, housing completions, building permits issued by % change from 1 year ago",
+        x = NULL,
+        y = NULL,
+        color = NULL,
+        caption = "Source: Federal Reserve Economic Data") +
+    graph_formatting
+
+ggsave(
+    filename = "construction_stats.png",
+    plot = construction_stats_graph,
+    device = "png"
+)
+
+housing_inputs_graph <- housing_input_prices %>%
+    ggplot(
+        data = ., mapping = aes(x = date, 
+                                y = value, 
+                                color = series_id)) +
+    geom_line(size = 1) +
+    labs(
+        title = "Housing inputs PPIs",
+        subtitle = "Residential construction goods PPI, residential construction services PPI, construction materials PPI, lumber and wood products PPI, glass PPI, iron and steel PPI, ready-mix concrete PPI",
+        x = NULL,
+        y = NULL,
+        color = NULL,
+        caption = "Source: Federal Reserve Economic Data") +
+    graph_formatting
+
+ggsave(
+    filename = "housing_inputs.png",
+    plot = housing_inputs_graph,
+    device = "png"
+)
+
+home_prices_graph <- home_prices %>%
+    ggplot(
+        data = ., mapping = aes(x = date, 
+                                y = value, 
+                                color = series_id)) +
+    geom_line(size = 1) +
+    labs(
+        title = "Home prices",
+        subtitle = "S&P/Case-Shiller U.S. National Home Price Index, median sales price of houses sold",
+        x = NULL,
+        y = NULL,
+        color = NULL,
+        caption = "Source: Federal Reserve Economic Data") +
+    graph_formatting
+
+ggsave(
+    filename = "home_prices.png",
+    plot = home_prices_graph,
+    device = "png"
+)
+
+mortgage_rate_graph <- avg30YrFixedMortgage %>%
+    ggplot(
+        data = ., mapping = aes(x = date, 
+                                y = value, 
+                                color = series_id)) +
+    geom_line(size = 1) +
+    labs(
+        title = "Mortgage Rates",
+        subtitle = "Average 30-year fixed-rate mortgage rates",
+        x = NULL,
+        y = NULL,
+        color = NULL,
+        caption = "Source: Federal Reserve Economic Data") +
+    graph_formatting
+
+ggsave(
+    filename = "mortage_rates.png",
+    plot = mortgage_rate_graph,
+    device = "png"
 )
 
 ```
