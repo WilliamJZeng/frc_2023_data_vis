@@ -1,24 +1,145 @@
 ---
 title: "Housing Presentation Visualizations"
 format: html
+
+code-fold: true
+code-tools: true
 ---
+# [Optional] Set up radian terminal
+Run `radian` in `pwsh` termminal (after `conda` has been activated).
 
 # Imports
-```{r}
+```{r Imports}
+#| code-fold: show
+#| code-summary: "Show the code"
+
 library(pacman)
 
-p_load(tidyverse, magrittr, fredr, usethis)
+p_load(httpgd, tidyverse, magrittr, fredr, usethis, tidylog)
+
 ```
 
 # FRED Data Request
-```{r}
+## FRED API Key
+```{r FRED_API_Key}
+#| code-fold: show
+#| code-summary: "Show the code"
+
 # set fred api key
-edit_r_environ()
+# edit_r_environ()
+fredr_set_key("b52b96206028819f9004032ce5afe5a7")
 
-# test
+```
 
-# test 2
+## Construction Statistics
+```{r Construction_Stats}
+#| code-fold: show
+#| code-summary: "Show the code"
+#| 
+# construction stats
 
-# test 3
+#
+houseStarts <- fredr(
+    series_id = "HOUST",
+    observation_start = as.Date("2022-08-01"),
+    frequency = "m",
+    aggregation_method = "avg"
+)
+
+houseCompletes <- fredr(
+    series_id = "COMPUTSA",
+    observation_start = as.Date("2022-08-01"),
+    frequency = "m",
+    aggregation_method = "avg"
+)
+
+housePermits <- fredr(
+    series_id = "HOUST",
+    observation_start = as.Date("2022-08-01"),
+    frequency = "m",
+    aggregation_method = "avg"
+)
+```
+
+## Input Prices
+```{r Input_Prices}
+#| code-fold: show
+#| code-summary: "Show the code"
+
+# input prices
+# to-do: seasonally adjust all?
+
+ppi_residentialConstructionGoods <- fredr(
+    series_id = "WPUIP2311001",
+    observation_start = as.Date("2022-08-01"),
+    frequency = "m",
+    aggregation_method = "avg"
+)
+
+ppi_residentialConstructionServices <- fredr(
+    series_id = "WPUIP2311102",
+    observation_start = as.Date("2022-08-01"),
+    frequency = "m",
+    aggregation_method = "avg"
+)
+
+ppi_constructionMaterials <- fredr(
+    series_id = "WPUSI012011",
+    observation_start = as.Date("2022-08-01"),
+    frequency = "m",
+    aggregation_method = "avg"
+)
+
+ppi_lumber_woodProducts <- fredr(
+    series_id = "WPU08",
+    observation_start = as.Date("2022-08-01"),
+    frequency = "m",
+    aggregation_method = "avg"
+)
+
+ppi_glass <- fredr(
+    series_id = "WPU131",
+    observation_start = as.Date("2022-08-01"),
+    frequency = "m",
+    aggregation_method = "avg"
+)
+
+ppi_iron_steel <- fredr(
+    series_id = "WPU131",
+    observation_start = as.Date("2022-08-01"),
+    frequency = "m",
+    aggregation_method = "avg"
+)
+
+ppi_readyMixConcrete <- fredr(
+    series_id = "WPS133301",
+    observation_start = as.Date("2022-08-01"),
+    frequency = "m",
+    aggregation_method = "avg"
+)
+```
+
+## Home Finances
+```{r Home_Prices}
+#| code-fold: show
+#| code-summary: "Show the code"
+
+# home prices
+
+# 
+avg30YrFixedMortgage <- fredr(
+    series_id = "MORTGAGE30US",
+    observation_start = as.Date("2022-08-01"),
+    frequency = "m",
+    aggregation_method = "avg"
+)
+
+# seasonally-adjusted
+spcs_homePriceIndex <- fredr(
+    series_id = "CSUSHPISA",
+    observation_start = as.Date("2022-08-01"),
+    frequency = "m",
+    aggregation_method = "avg"
+)
 
 ```
