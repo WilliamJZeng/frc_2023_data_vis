@@ -107,7 +107,7 @@ home_prices <- pmap_dfr(
   .l = list(
     series_id = c("CSUSHPISA", "MSPUS"),
     frequency = c("m", "q"), 
-    observation_start = rep(as.Date("2022-01-01"), 2),
+    observation_start = c(as.Date("2022-01-01"), as.Date("2021-11-01")),
     units = rep("pc1", 2)
     ),
   .f = ~ fredr(series_id = ..1, frequency = ..2, observation_start = ..3, units = ..4)
@@ -116,6 +116,10 @@ mutate(series_id =
     case_when(
         series_id == "CSUSHPISA" ~ "S&P/Case-Shiller U.S. National Home Price Index",
         series_id == "MSPUS" ~ "Median sales price of houses sold"
+    ),
+    date = case_when(
+        series_id == "S&P/Case-Shiller U.S. National Home Price Index" ~ date,
+        series_id == "Median sales price of houses sold" ~ date %m+% months(2)
     )
 )
 
