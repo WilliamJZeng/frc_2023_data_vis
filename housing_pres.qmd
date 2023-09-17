@@ -32,7 +32,7 @@ p_load(httpgd, tidyverse, magrittr, fredr, usethis, tidylog)
 
 # set fred api key
 # edit_r_environ()
-fredr_set_key("b52b96206028819f9004032ce5afe5a7")
+fredr_set_key("deee9e25196e8adae1bb08246163f630")
 
 ```
 
@@ -135,6 +135,69 @@ mutate(series_id =
         series_id == "MORTGAGE30US" ~ "Average 30-year fixed-rate mortgage"
     )
 )
+```
+
+## Housing Starts
+```{r housing_starts}
+housing_starts <- fredr(
+    series_id = "HOUST",
+    frequency = "m", 
+    observation_start = as.Date("2021-01-01"),
+    units = "lin"
+) %>%
+mutate(series_id = 
+    case_when(
+        series_id == "HOUST" ~ "New Privately-Owned Housing Units Started: Total Units"
+    )
+) %>%
+select(date, value) %>%
+rename_at("value", ~"All Starts")
+
+```
+
+## Single Starts
+```{r single_housing_starts}
+single_housing_starts <- fredr(
+    series_id = "HOUST1F",
+    frequency = "m", 
+    observation_start = as.Date("2021-01-01"),
+    units = "lin"
+) %>%
+mutate(series_id = 
+    case_when(
+        series_id == "HOUST1F" ~ "New Privately-Owned Housing Units Started: Single Units"
+    )
+) %>%
+select(date, value) %>%
+rename_at("value", ~"Single Starts")
+
+```
+
+## Multi-Unit Starts
+```{r multi_housing_starts}
+multi_housing_starts <- fredr(
+    series_id = "HOUST5F",
+    frequency = "m", 
+    observation_start = as.Date("2021-01-01"),
+    units = "lin"
+) %>%
+mutate(series_id = 
+    case_when(
+        series_id == "HOUST5F" ~ "New Privately-Owned Housing Units Started: Multiple Units"
+    )
+) %>%
+select(date, value) %>%
+rename_at("value", ~"Multi Starts")
+ 
+```
+
+## Combined Starts
+```{r comb_starts}
+comb_starts = merge(merge(housing_starts, single_housing_starts, by = "date"), multi_housing_starts, by = "date") 
+
+long_comb = comb_starts %>% 
+    pivot_longer(cols = c("Multi Starts", "Single Starts", "All Starts"))
+
 ```
 
 ## Graphics
@@ -261,4 +324,15 @@ ggsave(
     device = "png"
 )
 
+
+comb_start_graph = long_comb %>% 
+    ggplot(aes(x = date,  y = value)) +
+    geom_line(aes(color = name))
+
+
+ggsave(
+    filename = "combined_starts.png",
+    plot = comb_start_graph,
+    device = "png"
+)
 ```
